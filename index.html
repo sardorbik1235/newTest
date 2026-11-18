@@ -1,13 +1,122 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <title>Osh Markazi - Kassa va Ombor</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    button { padding: 10px 15px; margin: 5px; cursor: pointer; font-size: 14px; }
+    input { padding: 8px; font-size: 14px; margin: 5px 0; }
+    .box { background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #ddd; }
+  </style>
 </head>
 <body>
-    <h1>hello world test git hup</h1>
-    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Corporis, similique iste maiores sequi sit animi aperiam corrupti quisquam esse voluptatum quas non est repellendus. Molestias repellat maxime fuga esse tempora.</p>
-    <h2>Lorem ipsum dolor sit amet consectetur.</h2>
+
+  <div class="box">
+    <h3>Mijozlar soni (ushbu buyurtma uchun):</h3>
+    <input type="number" id="mijozSoniInput" value="1" min="1" style="width: 80px;"> kishi
+  </div>
+
+  <div class="box">
+    <h2>1. Kassa (Sotuv)</h2>
+    <button onclick="sotish('osh_1', 35000)">1 porsiya Osh (35,000 so'm)</button>
+    <button onclick="sotish('osh_07', 28000)">0.7 porsiya Osh (28,000 so'm)</button>
+    <button onclick="sotish('choy', 5000)">Choy (5,000 so'm)</button>
+  </div>
+
+  <div class="box">
+    <h3>Kunlik boshqa xarajat qo'shish (masalan: o'tin, ishchi puli)</h3>
+    <input type="number" id="xarajatInput" placeholder="Summa (so'mda)">
+    <br>
+    <button onclick="xarajatQoshish()">Xarajatni qo'shish</button>
+  </div>
+
+  <div class="box">
+    <h2>2. Ishlatilgan mahsulotlar va Ombor qoldig'i</h2>
+    <ul id="omborRoyxati"></ul>
+  </div>
+
+  <div class="box">
+    <h2>3. Moliya va Mijozlar hisoboti (Bugun)</h2>
+    <p>Kelgan jami mijozlar: <b id="mijozlarSoni">0</b> nafar</p>
+    <p>Jami savdo (Tushum): <b id="tushum">0</b> so'm</p>
+    <p>Mahsulotlar tannarxi: <b id="tannarx">0</b> so'm</p>
+    <p>Boshqa xarajatlar: <b id="boshqaXarajat">0</b> so'm</p>
+    <p><b>SOF FOYDA: <span id="sofFoyda">0</span> so'm</b></p>
+  </div>
+
+  <script>
+    // 1. Ombordagi mahsulotlar va narxlar
+    let ombor = {
+      guruch: { nomi: "Guruch", qoldiq: 50, ishlatildi: 0, narx: 18000, birlik: "kg" },
+      gosht:  { nomi: "Go'sht", qoldiq: 30, ishlatildi: 0, narx: 95000, birlik: "kg" },
+      sabzi:  { nomi: "Sabzi",  qoldiq: 40, ishlatildi: 0, narx: 4000,  birlik: "kg" },
+      yog:    { nomi: "Yog'",   qoldiq: 20, ishlatildi: 0, narx: 20000, birlik: "litr" }
+    };
+
+    // 2. Retseptura (1 porsiya uchun)
+    const retsept = {
+      osh_1:  { guruch: 0.15, gosht: 0.10, sabzi: 0.15, yog: 0.05 },
+      osh_07: { guruch: 0.10, gosht: 0.07, sabzi: 0.10, yog: 0.03 },
+      choy:   {} 
+    };
+
+    // 3. Ko'rsatkichlar
+    let jamiTushum = 0;
+    let jamiTannarx = 0;
+    let jamiBoshqaXarajat = 0;
+    let jamiMijozlar = 0;
+
+    // Sotish funksiyasi
+    function sotish(taomTuri, sotuvNarxi) {
+      // Kiritilgan mijozlar sonini olish
+      let kishiSoni = parseInt(document.getElementById("mijozSoniInput").value) || 1;
+      jamiMijozlar += kishiSoni;
+
+      jamiTushum += sotuvNarxi;
+
+      // Retsept bo'yicha ombordan mahsulot ayirish
+      let kerakliMahsulotlar = retsept[taomTuri];
+      for (let key in kerakliMahsulotlar) {
+        let miqdor = kerakliMahsulotlar[key];
+        ombor[key].qoldiq -= miqdor;
+        ombor[key].ishlatildi += miqdor;
+        jamiTannarx += miqdor * ombor[key].narx;
+      }
+
+      ekranniYangilash();
+    }
+
+    // Xarajat qo'shish
+    function xarajatQoshish() {
+      let summa = Number(document.getElementById("xarajatInput").value);
+      if (summa > 0) {
+        jamiBoshqaXarajat += summa;
+        document.getElementById("xarajatInput").value = "";
+        ekranniYangilash();
+      }
+    }
+
+    // Ekranni yangilash
+    function ekranniYangilash() {
+      let royxat = document.getElementById("omborRoyxati");
+      royxat.innerHTML = "";
+      for (let key in ombor) {
+        let m = ombor[key];
+        royxat.innerHTML += `<li>${m.nomi}: Ishlatildi <b>${m.ishlatildi.toFixed(2)} ${m.birlik}</b> | Qoldi: ${m.qoldiq.toFixed(2)} ${m.birlik}</li>`;
+      }
+
+      let sofFoyda = jamiTushum - (jamiTannarx + jamiBoshqaXarajat);
+      
+      document.getElementById("mijozlarSoni").innerText = jamiMijozlar;
+      document.getElementById("tushum").innerText = jamiTushum.toLocaleString();
+      document.getElementById("tannarx").innerText = Math.round(jamiTannarx).toLocaleString();
+      document.getElementById("boshqaXarajat").innerText = jamiBoshqaXarajat.toLocaleString();
+      document.getElementById("sofFoyda").innerText = Math.round(sofFoyda).toLocaleString();
+    }
+
+    ekranniYangilash();
+  </script>
+
 </body>
 </html>
